@@ -87,6 +87,10 @@ TRANSLATION RULES:
 
 DEFAULT_MODEL = "gpt-4o-mini"
 
+# Soft cap on total source characters per batch (~1 token ≈ 4 chars).
+# Limits output size independently of batch_size, for batches with long strings.
+MAX_BATCH_CHARS = 4000
+
 
 def make_openai_client(base_url: str | None = None,
                        extra_headers: dict | None = None):
@@ -239,7 +243,19 @@ def translate_po(
 
     client = make_openai_client(base_url=base_url, extra_headers=extra_headers)
 
-    batches = [todo[i:i + batch_size] for i in range(0, len(todo), batch_size)]
+    batches: list[list] = []
+    current: list = []
+    current_chars = 0
+    for entry in todo:
+        chars = len(entry.msgid)
+        if current and (len(current) >= batch_size or current_chars + chars > MAX_BATCH_CHARS):
+            batches.append(current)
+            current = []
+            current_chars = 0
+        current.append(entry)
+        current_chars += chars
+    if current:
+        batches.append(current)
     failed_batches: list[int] = []
     recent_times: list[float] = []
     save_lock = threading.Lock()
