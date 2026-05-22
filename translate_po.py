@@ -312,7 +312,8 @@ def translate_po(
                         tqdm.write(f"  {'Source':<{col}} | Translation")
                         tqdm.write(f"  {'-' * col}-+-{'-' * col}")
                         for entry in batch[-preview:]:
-                            s, d = entry.msgid, entry.msgstr
+                            s = entry.msgid.replace("\n", " ")
+                            d = entry.msgstr.replace("\n", " ")
                             src = (s[:col - 3] + "...") if len(s) > col else s
                             dst = (d[:col - 3] + "...") if len(d) > col else d
                             tqdm.write(f"  {src:<{col}} | {dst}")
