@@ -1,0 +1,4 @@
+UnityPy
+polib
+tqdm
+openai
