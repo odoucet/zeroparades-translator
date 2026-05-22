@@ -69,6 +69,8 @@ python po_to_bundle.py \
 
 Untranslated entries fall back to the source language text automatically.
 
+The script also patches `catalog.json` automatically. Unity's Addressables system stores a CRC32 checksum for each bundle in `ZeroParades_Data/StreamingAssets/aa/catalog.json`. After the bundle is modified its checksum changes, and without this patch the game would fail to load it (`RemoteProviderException: Invalid path`). The script recomputes the CRC of the new bundle and updates the matching record in the catalog. A backup of the catalog is saved as `catalog.json.bak` before the first modification.
+
 ---
 
 ## How it works — in depth
