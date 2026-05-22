@@ -1,8 +1,8 @@
 """
 po_to_bundle.py
 Injects a translated PO file into the Zero Parades asset bundle as a new
-LocalizationTable asset. The original bundle is not modified — a patched copy
-is written to the output path.
+LocalizationTable asset. A .bak backup of the original bundle is always
+created before any modification.
 
 Usage:
     python po_to_bundle.py --bundle <path/to/bundle> --po fr_translation.po
@@ -17,12 +17,16 @@ Usage:
 """
 
 import argparse
+import logging
 import shutil
 from pathlib import Path
+
 import UnityPy
 import polib
 
-from language_codes import get_asset_path, get_code, confirmed_codes_help
+from language_codes import get_asset_path, confirmed_codes_help
+
+logger = logging.getLogger(__name__)
 
 TEMPLATE_LANG = "de"
 TEMPLATE_ASSET_PATH = get_asset_path("de")
@@ -31,7 +35,6 @@ TEMPLATE_ASSET_PATH = get_asset_path("de")
 def po_to_bundle(bundle_path: Path, po_path: Path, lang_code: int,
                  lang_name: str, output_path: Path) -> None:
     """Inject translated PO entries into the bundle as a new LocalizationTable."""
-    # Load translations
     po = polib.pofile(str(po_path))
     translations: dict[str, str] = {}
     untranslated = 0
@@ -43,49 +46,52 @@ def po_to_bundle(bundle_path: Path, po_path: Path, lang_code: int,
             untranslated += 1
 
     if untranslated:
-        print(
-            f"Warning: {untranslated}/{len(po)} untranslated entries "
-            "— source text used as fallback."
+        logger.warning(
+            "%d/%d untranslated entries — source text used as fallback.",
+            untranslated, len(po),
         )
 
-    # Copy bundle if output differs from input
+    # Always back up the original bundle before touching it
+    backup_path = bundle_path.with_suffix(bundle_path.suffix + ".bak")
+    if not backup_path.exists():
+        shutil.copy2(bundle_path, backup_path)
+        logger.info("Backup created → %s", backup_path)
+
     if output_path != bundle_path:
         shutil.copy2(bundle_path, output_path)
-        print(f"Copied bundle → {output_path}")
+        logger.info("Copied bundle → %s", output_path)
 
-    print("Loading bundle…")
+    logger.info("Loading bundle…")
     env = UnityPy.load(str(output_path))
 
-    # Read the template (German) to get the ordered key list
     if TEMPLATE_ASSET_PATH not in env.container:
         raise FileNotFoundError(f"Template asset not found: {TEMPLATE_ASSET_PATH}")
 
     template_obj = env.container[TEMPLATE_ASSET_PATH].read()
     ordered_keys = list(template_obj.m_data.m_keys)
 
-    # Build new value list in key order
     new_values = [translations.get(k, "") for k in ordered_keys]
 
-    # Modify the template object in place to become the new language
     template_obj.m_languageCode = lang_code
     template_obj.m_Name = f"{lang_name}LocalizationTable"
     template_obj.m_data.m_keys = ordered_keys
     template_obj.m_data.m_values = new_values
     template_obj.save()
 
-    # Write patched bundle
     with open(output_path, "wb") as f:
         f.write(env.file.save())
 
-    print(f"Patched bundle written → {output_path}")
-    print(
-        f"  Asset: {lang_name}LocalizationTable  "
-        f"lang_code={lang_code}  entries={len(ordered_keys)}"
+    logger.info("Patched bundle written → %s", output_path)
+    logger.info(
+        "  Asset: %sLocalizationTable  lang_code=%d  entries=%d",
+        lang_name, lang_code, len(ordered_keys),
     )
 
 
 def main():
     """Parse arguments and run po_to_bundle."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
     parser = argparse.ArgumentParser(description="Inject translated PO into the game bundle")
     parser.add_argument("--bundle", required=True, help="Path to the original .bundle file")
     parser.add_argument("--po", required=True, help="Translated .po file")
