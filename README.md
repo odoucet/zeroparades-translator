@@ -2,7 +2,9 @@
 
 > **Work In Progress** — The toolkit is functional for individual steps (extract, translate, inject) but has not yet been validated end-to-end on a full playthrough. Expect rough edges. [Watch this repository](https://github.com/odoucet/zeroparades-translator/watchers) to be notified of updates.
 
-Unofficial tools to create community translations for *Zero Parades*. The scripts extract game text into a standard `.po` file, translate it (manually or via LLM), and re-inject the result into the game.
+Unofficial, community-made tools to create fan translations of *Zero Parades*. The scripts extract game text into a standard `.po` file, translate it (manually or via LLM), and re-inject the result into the game.
+
+> **A note on quality:** This is a community project, not an official translation. LLM-generated translations will inevitably be rougher than a professional localisation — they can miss nuance, tone, and context that a human translator working with the developers would catch. **If the game gets an official translation for your language, use that instead.** This toolkit exists for languages that may never get official support, or for players who simply can't wait.
 
 > **Legal note:** These scripts contain **no game text**. They only read from and write to a copy of the game you legally own. A legitimate, installed copy of the game is required.
 
