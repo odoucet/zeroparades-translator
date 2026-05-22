@@ -19,7 +19,7 @@ Unofficial, community-made tools to create fan translations of *Zero Parades*. T
 **1. Install dependencies**
 
 ```bash
-pip install UnityPy polib tqdm openai
+pip install -r requirements.txt
 ```
 
 **2. Extract the text**
@@ -269,3 +269,9 @@ Verified: `de` → (100+101) % 144 = **57** ✓, `ru` → (114+117) % 144 = **87
    Searching for the null-terminated string `LanguageIsoCode` at absolute offset **`0x003029b2`** reveals the `ZAUM.FELD.Data.Localization.LanguageIsoCode` enum and all 104 of its member names (`af` … `zu`).
 
 3. **The formula** — Observed by cross-referencing the two confirmed 2-char codes (`de`=57, `ru`=87) against their ASCII character sums modulo 144. No single formula covers both 2-char and regional codes.
+
+---
+
+## Disclaimer
+
+*Zero Parades* and all associated names, characters, and assets are trademarks and/or copyrights of ZAUM Studio. This project is an unofficial, community-made fan tool and is not affiliated with, endorsed by, or supported by ZAUM Studio in any way. All game content belongs to its respective owners — these scripts contain no game assets and require a legitimate, purchased copy of the game to function.
