@@ -6,13 +6,13 @@ created before any modification.
 
 Usage:
     python po_to_bundle.py --bundle <path/to/bundle> --po fr_translation.po
-                           --lang-code 72 --lang-name fr
+                           --lang-name fr
                            --output <path/to/patched_bundle>
 
 --bundle     Path to the original g5ibkj7vdwf2g67g_assets_all_*.bundle
 --po         Translated .po file
---lang-code  Unity language enum int for the target language (see language_codes.py)
---lang-name  Short language identifier, e.g. "fr" — used in the asset name
+--lang-name  Locale code, e.g. "fr" — used in the asset name and to look up
+             the language enum int from language_codes.py
 --output     Where to write the patched bundle (default: overwrites the original)
 """
 
@@ -24,7 +24,7 @@ from pathlib import Path
 import UnityPy
 import polib
 
-from language_codes import get_asset_path, confirmed_codes_help
+from language_codes import get_asset_path, get_code, DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -98,17 +98,33 @@ def main():
     parser = argparse.ArgumentParser(description="Inject translated PO into the game bundle")
     parser.add_argument("--bundle", required=True, help="Path to the original .bundle file")
     parser.add_argument("--po", required=True, help="Translated .po file")
-    parser.add_argument("--lang-code", type=int, required=True,
-                        help=f"Unity language enum int. Confirmed: {confirmed_codes_help()}. "
-                             "Use language_codes.py get_code() for predicted values.")
-    parser.add_argument("--lang-name", default="fr", help="Language prefix, e.g. fr (default: fr)")
+    parser.add_argument("--lang-name", required=True,
+                        help="Locale code, e.g. fr, it, de. "
+                             "The language enum int is derived automatically from language_codes.py.")
     parser.add_argument("--output", help="Output bundle path (default: overwrite original)")
     args = parser.parse_args()
+
+    lang_code, source = get_code(args.lang_name)
+    display = DISPLAY_NAMES.get(args.lang_name, args.lang_name)
+
+    if source == "confirmed":
+        logger.info("Language: %s (%s)  lang_code=%d  [confirmed]", display, args.lang_name, lang_code)
+    elif source == "formula":
+        logger.warning(
+            "Language: %s (%s)  lang_code=%d  [formula-derived, unconfirmed — "
+            "verify that the language appears in Settings → Language in-game]",
+            display, args.lang_name, lang_code,
+        )
+    else:
+        parser.error(
+            f"No language code known for {args.lang_name!r}. "
+            "Add it to language_codes.py or check the locale spelling."
+        )
 
     bundle = Path(args.bundle)
     output = Path(args.output) if args.output else bundle
 
-    po_to_bundle(bundle, Path(args.po), args.lang_code, args.lang_name, output)
+    po_to_bundle(bundle, Path(args.po), lang_code, args.lang_name, output)
 
 
 if __name__ == "__main__":

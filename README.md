@@ -62,11 +62,10 @@ Open `my_translation.po` in **[Poedit](https://poedit.net/)** (free). `msgid` is
 python po_to_bundle.py \
   --bundle "ZeroParades_Data/StreamingAssets/aa/StandaloneWindows64/g5ibkj7vdwf2g67g_assets_all_df231fe1e06c36a5cb63c87a08cd9257.bundle" \
   --po my_translation.po \
-  --lang-code 72 \
   --lang-name fr
 ```
 
-> **`--lang-code`:** The game uses a custom language enum — `72` is the predicted value for French (see [Language codes](#language-codes) for the derivation and other languages).
+> The language enum integer is looked up automatically from `language_codes.py`. For unconfirmed codes (formula-derived), a warning is printed — see [Language codes](#language-codes) for details.
 
 Untranslated entries fall back to the source language text automatically.
 
