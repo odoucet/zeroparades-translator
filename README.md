@@ -34,21 +34,18 @@ python bundle_to_po.py \
 *Option A — LLM (automated, then review):*
 
 ```bash
-# Claude (set ANTHROPIC_API_KEY first)
+# OpenAI (set OPENAI_API_KEY first)
 python translate_po.py --input my_translation.po --output my_translation.po \
     --target-lang French
 
-# OpenAI (set OPENAI_API_KEY first)
-python translate_po.py --input my_translation.po --output my_translation.po \
-    --target-lang French --api openai --model gpt-4o-mini
-
-# OpenRouter
+# OpenRouter (set OPENAI_API_KEY to your OpenRouter key)
+export OPENAI_API_KEY=sk-or-...
 python translate_po.py --input my_translation.po --output my_translation.po \
     --target-lang French --base-url https://openrouter.ai/api/v1 \
-    --api-key sk-or-... --model mistralai/mistral-7b-instruct \
+    --model mistralai/mistral-7b-instruct \
     --header "HTTP-Referer=https://yoursite.com" --header "X-Title=Zero Parades Translator"
 
-# Local AI (LM Studio, LocalAI, Ollama…)
+# Local AI (LM Studio, LocalAI, Ollama… — no key needed)
 python translate_po.py --input my_translation.po --output my_translation.po \
     --target-lang French --base-url http://127.0.0.1:8080/v1 --model your-model-name
 ```
@@ -181,25 +178,23 @@ Sends strings to an LLM in batches of 25, saves a checkpoint every 250 entries, 
 | `--output` | required | Output `.po` (created or resumed) |
 | `--target-lang` | required | Target language in plain English, e.g. `French` |
 | `--source-lang` | `es_mx` | Source language code (`es_mx`, `de`, `ru`, `zh_cn`) |
-| `--api` | `claude` | Provider: `claude` or `openai` |
-| `--model` | see below | Model name override |
-| `--base-url` | — | OpenAI-compatible endpoint (local AI or OpenRouter); implies `--api openai` |
-| `--api-key` | — | API key for `--base-url` services (overrides `OPENAI_API_KEY`) |
+| `--model` | `gpt-4o-mini` | Model name override |
+| `--base-url` | — | OpenAI-compatible endpoint (local AI or OpenRouter) |
 | `--header` | — | Extra HTTP header, repeatable: `--header "HTTP-Referer=https://…"` |
 | `--batch-size` | `25` | Strings per API call |
 | `--save-every` | `10` | Checkpoint interval in batches |
 
-Default models: `claude-haiku-4-5-20251001` (Claude) / `gpt-4o-mini` (OpenAI).
+Default model: `gpt-4o-mini`.
 
 **Cost estimate** for ~70 000 strings (includes lore context ~1 600 tokens injected per call):
 
 | Model | Estimated cost |
 |-------|---------------|
-| `claude-haiku-4-5` | ~$12–16 |
-| `claude-sonnet-4-6` | ~$38–45 |
 | `gpt-4o-mini` | ~$2–3 |
 | OpenRouter (varies by model) | ~$1–10 |
 | Local AI | free |
+
+API key is read from the `OPENAI_API_KEY` environment variable. For OpenRouter, set it to your OpenRouter key; for local AI with no authentication, the variable can be omitted.
 
 The game lore and terminology guide (`llm_translation_context.md`) is automatically prepended to every API call to maintain consistent tone and proper noun handling.
 
