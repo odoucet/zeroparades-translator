@@ -45,11 +45,14 @@ def po_to_bundle(bundle_path: Path, po_path: Path, lang_code: int,
             translations[entry.msgctxt] = entry.msgid
             untranslated += 1
 
+    total_entries = len(po)
     if untranslated:
         logger.warning(
-            "%d/%d untranslated entries — source text used as fallback.",
-            untranslated, len(po),
+            "%d/%d entries untranslated (%.1f%%) — source text will be used as fallback.",
+            untranslated, total_entries, untranslated / total_entries * 100,
         )
+    else:
+        logger.info("All %d entries translated.", total_entries)
 
     # Always back up the original bundle before touching it
     backup_path = bundle_path.with_suffix(bundle_path.suffix + ".bak")
