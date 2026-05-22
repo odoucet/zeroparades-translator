@@ -163,19 +163,37 @@ def parse_json_array(text: str) -> list[str]:
 
 # ── Core translation logic ────────────────────────────────────────────────────
 
-def translate_batch(texts: list[str], system: str, client, model: str) -> list[str]:
-    """Translate a list of strings in one API call; returns translated strings in order."""
+def translate_batch(texts: list[str], system: str, client, model: str,
+                    _depth: int = 0) -> list[str]:
+    """Translate texts; splits into halves and retries on parse or count errors (max 3 splits).
+
+    Returns empty strings for entries that keep failing — they will be retried on the next run.
+    """
+    if not texts:
+        return []
     user = (
         f"Translate the following {len(texts)} strings. "
         "Return ONLY a JSON array of the translated strings in the same order.\n\n"
         + json.dumps(texts, ensure_ascii=False)
     )
-    result = parse_json_array(call_openai(client, model, system, user))
-    if len(result) != len(texts):
-        raise ValueError(
-            f"LLM returned {len(result)} strings for {len(texts)} inputs."
+    try:
+        result = parse_json_array(call_openai(client, model, system, user))
+        result = [s if isinstance(s, str) else "" for s in result]
+        if len(result) != len(texts):
+            raise ValueError(f"LLM returned {len(result)} strings for {len(texts)} inputs.")
+        return result
+    except (ValueError, json.JSONDecodeError):
+        if _depth >= 3 or len(texts) == 1:
+            logger.warning(
+                "Batch of %d still failing after splits — entries will be retried on next run.",
+                len(texts),
+            )
+            return [""] * len(texts)
+        mid = len(texts) // 2
+        return (
+            translate_batch(texts[:mid], system, client, model, _depth + 1)
+            + translate_batch(texts[mid:], system, client, model, _depth + 1)
         )
-    return result
 
 
 def translate_po(
@@ -233,7 +251,7 @@ def translate_po(
         except Exception as exc:
             return batch_idx, None, exc, time.time() - t0
 
-    with tqdm(total=len(todo), initial=0, unit="entry",
+    with tqdm(total=total, initial=done, unit="entry",
               desc=f"Translating ->{target_lang}") as pbar:
 
         executor = ThreadPoolExecutor(max_workers=parallel)
