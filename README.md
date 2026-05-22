@@ -1,8 +1,12 @@
 # Zero Parades — Community Translation Toolkit
 
-> **Work In Progress** — The toolkit is functional for individual steps (extract, translate, inject) but has not yet been validated end-to-end on a full playthrough. Expect rough edges. [Watch this repository](https://github.com/odoucet/zeroparades-translator/watchers) to be notified of updates.
-
 Unofficial, community-made tools to create fan translations of *Zero Parades*. The scripts extract game text into a standard `.po` file, translate it (manually or via LLM), and re-inject the result into the game.
+
+## Screenshots
+
+| Character skills (French) | In-game dialogue (French) |
+|---|---|
+| ![Character skills screen in French](screenshots/skills_fr.jpg) | ![In-game dialogue in French](screenshots/dialogue_fr.jpg) |
 
 > **A note on quality:** This is a community project, not an official translation. LLM-generated translations will inevitably be rougher than a professional localisation — they can miss nuance, tone, and context that a human translator working with the developers would catch. **If the game gets an official translation for your language, use that instead.** This toolkit exists for languages that may never get official support, or for players who simply can't wait.
 
@@ -69,7 +73,11 @@ python po_to_bundle.py \
 
 Untranslated entries fall back to the source language text automatically.
 
-The script also patches `catalog.json` automatically. Unity's Addressables system stores a CRC32 checksum for each bundle in `ZeroParades_Data/StreamingAssets/aa/catalog.json`. After the bundle is modified its checksum changes, and without this patch the game would fail to load it (`RemoteProviderException: Invalid path`). The script recomputes the CRC of the new bundle and updates the matching record in the catalog. A backup of the catalog is saved as `catalog.json.bak` before the first modification.
+**Activating the translation in-game:** go to *Settings → Language* and select **Deutsch**. The script overwrites the German LocalizationTable asset in-place (it is the template), so your translation replaces German in the language list rather than appearing as a new entry. German is a safe slot to sacrifice — it is one of the four built-in languages but the game was designed primarily in English, so losing German is a reasonable trade-off for gaining your target language.
+
+> **After a game update:** Steam will overwrite the bundle and restore `catalog.json`, undoing the patch. Re-run this step (step 4 only — your `.po` file is untouched) after each update.
+
+The script also patches `catalog.json` automatically. Unity's Addressables system stores a CRC32 checksum for each bundle in `ZeroParades_Data/StreamingAssets/aa/catalog.json`. After the bundle is modified the checksum no longer matches, and without this patch the game would refuse to load it (`RemoteProviderException: Invalid path`). The patch sets every `m_Crc` value to `0`, which tells Unity to skip integrity verification entirely. A backup of the catalog is saved as `catalog.json.bak` before the first modification.
 
 ---
 
