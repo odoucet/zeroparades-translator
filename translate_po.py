@@ -118,13 +118,18 @@ def call_openai(client, model: str, system: str, user: str,
                 max_tokens=8192,
                 timeout=120,
             )
-            content = resp.choices[0].message.content
-            if content is None:
+            choice = resp.choices[0]
+            if choice.finish_reason == "length":
+                raise ValueError(
+                    f"Response truncated (max_tokens reached) for batch of "
+                    f"{user.count(chr(10))} lines — will split and retry."
+                )
+            if choice.message.content is None:
                 raise ValueError(
                     f"Model returned null content "
-                    f"(finish_reason={resp.choices[0].finish_reason!r})"
+                    f"(finish_reason={choice.finish_reason!r})"
                 )
-            return content
+            return choice.message.content
         except openai.RateLimitError:
             time.sleep(delay)
             delay *= 2
