@@ -188,11 +188,12 @@ Default model: `gpt-4o-mini`.
 
 **Cost estimate** for ~70 000 strings (includes lore context ~1 600 tokens injected per call):
 
-| Model | Estimated cost |
-|-------|---------------|
-| `gpt-4o-mini` | ~$2–3 |
-| OpenRouter (varies by model) | ~$1–10 |
-| Local AI | free |
+| Model | Estimated cost | Time (70k strings) |
+|-------|---------------|-------------------|
+| `gpt-4o-mini` | ~$2–3 | — |
+| OpenRouter (varies by model) | ~$1–10 | — |
+| `penrouter/owl-alpha` (OpenRouter) | Free | ~7h ✓ tested ES→FR |
+| Local AI | free | — |
 
 API key is read from the `OPENAI_API_KEY` environment variable. For OpenRouter, set it to your OpenRouter key; for local AI with no authentication, the variable can be omitted.
 
