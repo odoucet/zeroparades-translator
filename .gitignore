@@ -1,2 +1,36 @@
+# Translation output files
 *.po
-__pycache__/*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets and environment files
+.env
+.env.*
+*.env
+
+# IDE and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Game bundle files (large binary assets — do not commit)
+*.bundle
+*.bundle.bak
