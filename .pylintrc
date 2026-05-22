@@ -1,0 +1,9 @@
+[MESSAGES CONTROL]
+disable =
+    import-error,                  # third-party deps are installed; pylint env lacks them
+    too-many-arguments,            # translate_po() intentionally takes many params
+    too-many-positional-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    broad-exception-caught,        # process_batch must catch all errors to keep pipeline running
