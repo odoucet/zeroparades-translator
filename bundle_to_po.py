@@ -12,11 +12,15 @@ Usage:
 """
 
 import argparse
+import logging
 from pathlib import Path
+
 import UnityPy
 import polib
 
 from language_codes import ASSET_PATHS, confirmed_codes_help
+
+logger = logging.getLogger(__name__)
 
 
 def bundle_to_po(bundle_path: Path, lang: str, output_path: Path) -> None:
@@ -24,7 +28,7 @@ def bundle_to_po(bundle_path: Path, lang: str, output_path: Path) -> None:
     if lang not in ASSET_PATHS:
         raise ValueError(f"Unknown source language '{lang}'. Choose from: {list(ASSET_PATHS)}")
 
-    print(f"Loading bundle: {bundle_path}")
+    logger.info("Loading bundle: %s", bundle_path)
     env = UnityPy.load(str(bundle_path))
 
     asset_path = ASSET_PATHS[lang]
@@ -36,7 +40,7 @@ def bundle_to_po(bundle_path: Path, lang: str, output_path: Path) -> None:
     values = obj.m_data.m_values
     lang_code = obj.m_languageCode
 
-    print(f"Source: {obj.m_Name}  lang_code={lang_code}  entries={len(keys)}")
+    logger.info("Source: %s  lang_code=%d  entries=%d", obj.m_Name, lang_code, len(keys))
 
     po = polib.POFile()
     po.metadata = {
@@ -61,11 +65,13 @@ def bundle_to_po(bundle_path: Path, lang: str, output_path: Path) -> None:
         ))
 
     po.save(str(output_path))
-    print(f"Wrote {len(po)} entries to {output_path}")
+    logger.info("Wrote %d entries to %s", len(po), output_path)
 
 
 def main():
     """Parse arguments and run bundle_to_po."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
     parser = argparse.ArgumentParser(description="Extract LocalizationTable from bundle to PO")
     parser.add_argument("--bundle", required=True, help="Path to the .bundle file")
     parser.add_argument("--lang", default="de", choices=list(ASSET_PATHS),

@@ -159,11 +159,14 @@ def confirmed_codes_help() -> str:
 
 
 if __name__ == "__main__":
-    print("Confirmed codes:")
-    for locale, code in sorted(CONFIRMED.items(), key=lambda x: x[1]):
-        print(f"  {code:4d}  {locale:8s}  {DISPLAY_NAMES.get(locale, '')}")
+    import logging as _logging
+    _logging.basicConfig(level=_logging.INFO, format="%(message)s")
+    _log = _logging.getLogger(__name__)
 
-    print("\nFormula-derived codes (unconfirmed):")
+    _log.info("Confirmed codes:")
+    for locale, code in sorted(CONFIRMED.items(), key=lambda x: x[1]):
+        _log.info("  %4d  %-8s  %s", code, locale, DISPLAY_NAMES.get(locale, ""))
+
+    _log.info("\nFormula-derived codes (unconfirmed):")
     for locale, code in sorted(FORMULA_DERIVED.items(), key=lambda x: x[1]):
-        name = DISPLAY_NAMES.get(locale, "")
-        print(f"  {code:4d}  {locale:8s}  {name}")
+        _log.info("  %4d  %-8s  %s", code, locale, DISPLAY_NAMES.get(locale, ""))
