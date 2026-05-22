@@ -159,7 +159,8 @@ def main():
     parser.add_argument("--po", required=True, help="Translated .po file")
     parser.add_argument("--lang-name", required=True,
                         help="Locale code, e.g. fr, it, de. "
-                             "The language enum int is derived automatically from language_codes.py.")
+                             "The language enum int is derived automatically "
+                             "from language_codes.py.")
     parser.add_argument("--output", help="Output bundle path (default: overwrite original)")
     args = parser.parse_args()
 
@@ -167,7 +168,8 @@ def main():
     display = DISPLAY_NAMES.get(args.lang_name, args.lang_name)
 
     if source == "confirmed":
-        logger.info("Language: %s (%s)  lang_code=%d  [confirmed]", display, args.lang_name, lang_code)
+        logger.info("Language: %s (%s)  lang_code=%d  [confirmed]",
+                    display, args.lang_name, lang_code)
     elif source == "formula":
         logger.warning(
             "Language: %s (%s)  lang_code=%d  [formula-derived, unconfirmed — "

@@ -354,7 +354,9 @@ def translate_po(
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
-SOURCE_LANG_NAMES = {locale: DISPLAY_NAMES[locale] for locale in ASSET_PATHS if locale in DISPLAY_NAMES}
+SOURCE_LANG_NAMES = {
+    loc: DISPLAY_NAMES[loc] for loc in ASSET_PATHS if loc in DISPLAY_NAMES
+}
 
 
 def main():
@@ -385,7 +387,8 @@ Examples:
         """,
     )
     parser.add_argument("--input",       required=True,  help="Source .po file")
-    parser.add_argument("--output",      required=True,  help="Output .po file (created or resumed)")
+    parser.add_argument("--output",      required=True,
+                        help="Output .po file (created or resumed)")
     parser.add_argument("--target-lang", required=True,
                         help="Target language in plain English, e.g. French")
     parser.add_argument("--source-lang", default="es_mx",

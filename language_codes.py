@@ -164,9 +164,9 @@ if __name__ == "__main__":
     _log = _logging.getLogger(__name__)
 
     _log.info("Confirmed codes:")
-    for locale, code in sorted(CONFIRMED.items(), key=lambda x: x[1]):
-        _log.info("  %4d  %-8s  %s", code, locale, DISPLAY_NAMES.get(locale, ""))
+    for _locale, _code in sorted(CONFIRMED.items(), key=lambda x: x[1]):
+        _log.info("  %4d  %-8s  %s", _code, _locale, DISPLAY_NAMES.get(_locale, ""))
 
     _log.info("\nFormula-derived codes (unconfirmed):")
-    for locale, code in sorted(FORMULA_DERIVED.items(), key=lambda x: x[1]):
-        _log.info("  %4d  %-8s  %s", code, locale, DISPLAY_NAMES.get(locale, ""))
+    for _locale, _code in sorted(FORMULA_DERIVED.items(), key=lambda x: x[1]):
+        _log.info("  %4d  %-8s  %s", _code, _locale, DISPLAY_NAMES.get(_locale, ""))

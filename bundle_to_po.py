@@ -75,7 +75,8 @@ def main():
     parser = argparse.ArgumentParser(description="Extract LocalizationTable from bundle to PO")
     parser.add_argument("--bundle", required=True, help="Path to the .bundle file")
     parser.add_argument("--lang", default="de", choices=list(ASSET_PATHS),
-                        help=f"Source language (default: de). Confirmed codes: {confirmed_codes_help()}")
+                        help=f"Source language (default: de). "
+                             f"Confirmed codes: {confirmed_codes_help()}")
     parser.add_argument("--output", required=True, help="Output .po file path")
     args = parser.parse_args()
 
