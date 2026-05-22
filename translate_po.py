@@ -115,7 +115,7 @@ def call_openai(client, model: str, system: str, user: str,
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
                 ],
-                max_tokens=4096,
+                max_tokens=8192,
                 timeout=120,
             )
             content = resp.choices[0].message.content
@@ -278,8 +278,7 @@ def translate_po(
                             dst = (d[:col - 3] + "...") if len(d) > col else d
                             tqdm.write(f"  {src:<{col}} | {dst}")
                         tqdm.write(
-                            f"  {elapsed:.1f}s · avg {avg_t:.1f}s"
-                            f" · ~{rem} batches left · ETA {eta}"
+                            f"  {elapsed:.1f}s · avg {avg_t:.1f}s · ~{rem} batches left · ETA {eta}"
                         )
                         tqdm.write("")
 
@@ -321,6 +320,7 @@ SOURCE_LANG_NAMES = {locale: DISPLAY_NAMES[locale] for locale in ASSET_PATHS if 
 def main():
     """Parse CLI arguments and run the translation pipeline."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(
         description="Translate a Zero Parades .po file using an OpenAI-compatible LLM",
@@ -363,8 +363,8 @@ Examples:
                              "Useful for OpenRouter rankings.")
     parser.add_argument("--batch-size",  type=int, default=25,
                         help="Strings per API call (default: 25)")
-    parser.add_argument("--save-every",  type=int, default=10,
-                        help="Save checkpoint every N batches (default: 10 = every 250 entries)")
+    parser.add_argument("--save-every",  type=int, default=1,
+                        help="Save checkpoint every N batches (default: 1 = every 25 entries)")
     parser.add_argument("--preview",     type=int, default=3,
                         help="Print last N translations per batch (default: 3, 0 to disable)")
     parser.add_argument("--parallel",    type=int, default=1,

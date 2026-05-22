@@ -13,9 +13,7 @@ Unofficial tools to create community translations for *Zero Parades*. The script
 **1. Install dependencies**
 
 ```bash
-pip install UnityPy polib tqdm
-pip install anthropic   # if using Claude
-pip install openai      # if using OpenAI or a local AI server
+pip install UnityPy polib tqdm openai
 ```
 
 **2. Extract the text**
@@ -43,7 +41,7 @@ export OPENAI_API_KEY=sk-or-...
 python translate_po.py --input my_translation.po --output my_translation.po \
     --target-lang French --base-url https://openrouter.ai/api/v1 \
     --model mistralai/mistral-7b-instruct \
-    --header "HTTP-Referer=https://yoursite.com" --header "X-Title=Zero Parades Translator"
+    --parallel 5 --batch 50 
 
 # Local AI (LM Studio, LocalAI, Ollama… — no key needed)
 python translate_po.py --input my_translation.po --output my_translation.po \
