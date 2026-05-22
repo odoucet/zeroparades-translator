@@ -22,8 +22,6 @@ import json
 import logging
 import re
 import shutil
-import struct
-import zlib
 from pathlib import Path
 
 import UnityPy
@@ -33,12 +31,9 @@ from language_codes import get_asset_path, get_code, DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 
-# Header that prefixes every AssetBundleRequestOptions record in m_ExtraDataString
-_CATALOG_RECORD_HEADER = (
-    b"LUnity.ResourceManager, Version=0.0.0.0, Culture=neutral, "
-    b"PublicKeyToken=nullJUnityEngine.ResourceManagement.ResourceProviders"
-    b".AssetBundleRequestOptions"
-)
+# "m_Crc": encoded in UTF-16LE — used to find and zero CRC fields in catalog.json
+_CRC_FIELD_UTF16 = b'\x22\x00\x6d\x00\x5f\x00\x43\x00\x72\x00\x63\x00\x22\x00\x3a\x00'
+_CRC_PATTERN = re.compile(_CRC_FIELD_UTF16 + b'(?:[\x30-\x39]\x00)+')
 
 TEMPLATE_LANG = "de"
 TEMPLATE_ASSET_PATH = get_asset_path("de")
@@ -52,57 +47,31 @@ def _fmt_size(n: int) -> str:
     return f"{n:.1f} TB"
 
 
-def _patch_catalog_crc(catalog_path: Path, bundle_path: Path) -> None:
-    """Recompute the CRC32 of the patched bundle and update it in catalog.json.
+def _patch_catalog_crc(catalog_path: Path) -> None:
+    """Disable bundle CRC checks in catalog.json by zeroing all m_Crc fields.
 
-    The catalog stores per-bundle options (including CRC) in m_ExtraDataString as
-    a base64-encoded binary blob. Each record is:
-        [152-byte ASCII type header] [4-byte LE uint32 = JSON byte count] [UTF-16LE JSON]
-    The JSON contains "m_Crc":<uint32> which Addressables checks at load time.
-    A mismatch causes a RemoteProviderException — hence this patch.
+    m_ExtraDataString is a base64-encoded blob of UTF-16LE JSON records.
+    Setting m_Crc to 0 makes Unity skip integrity verification at load time.
+    Each CRC digit sequence is replaced in-place (same byte length) so the
+    surrounding length fields stay valid.
     """
     if not catalog_path.exists():
         logger.warning("catalog.json not found at %s — CRC not updated", catalog_path)
         return
 
-    new_crc = zlib.crc32(bundle_path.read_bytes()) & 0xFFFFFFFF
-    bundle_stem = bundle_path.stem
-
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    extra = base64.b64decode(catalog["m_ExtraDataString"])
 
-    bundle_ids = [v for v in catalog["m_InternalIds"] if ".bundle" in str(v)]
-    bundle_idx = next((i for i, v in enumerate(bundle_ids) if bundle_stem in str(v)), None)
-    if bundle_idx is None:
-        logger.warning("Bundle %r not found in catalog — CRC not updated", bundle_stem)
+    def _zero_crc(m: re.Match) -> bytes:
+        n = (len(m.group(0)) - len(_CRC_FIELD_UTF16)) // 2
+        return _CRC_FIELD_UTF16 + b'\x20\x00' * (n - 1) + b'\x30\x00'
+
+    patched = _CRC_PATTERN.sub(_zero_crc, extra)
+    if patched == extra:
+        logger.warning("No m_Crc fields found in catalog — nothing patched")
         return
 
-    hlen = len(_CATALOG_RECORD_HEADER)
-    extra = bytearray(base64.b64decode(catalog["m_ExtraDataString"]))
-    offsets = [m.start() for m in re.finditer(re.escape(_CATALOG_RECORD_HEADER), extra)]
-
-    if bundle_idx >= len(offsets):
-        logger.warning("Record index %d out of range in catalog — CRC not updated", bundle_idx)
-        return
-
-    rec = offsets[bundle_idx]
-    json_len = struct.unpack_from("<I", extra, rec + hlen)[0]
-    json_start = rec + hlen + 4
-    json_str = extra[json_start: json_start + json_len].decode("utf-16-le")
-
-    m = re.search(r'"m_Crc":(\d+)', json_str)
-    if not m:
-        logger.warning("m_Crc field not found in catalog record — CRC not updated")
-        return
-    old_crc = int(m.group(1))
-
-    new_json_str = re.sub(r'"m_Crc":\d+', f'"m_Crc":{new_crc}', json_str)
-    new_json_bytes = new_json_str.encode("utf-16-le")
-
-    # Patch binary: update length field + replace JSON bytes
-    extra[rec + hlen: rec + hlen + 4] = struct.pack("<I", len(new_json_bytes))
-    extra[json_start: json_start + json_len] = new_json_bytes
-
-    catalog["m_ExtraDataString"] = base64.b64encode(bytes(extra)).decode("ascii")
+    catalog["m_ExtraDataString"] = base64.b64encode(patched).decode("ascii")
 
     backup = catalog_path.with_suffix(".json.bak")
     if not backup.exists():
@@ -110,7 +79,7 @@ def _patch_catalog_crc(catalog_path: Path, bundle_path: Path) -> None:
         logger.info("Catalog backup → %s", backup)
 
     catalog_path.write_text(json.dumps(catalog, separators=(",", ":")), encoding="utf-8")
-    logger.info("Catalog CRC updated: %d → %d", old_crc, new_crc)
+    logger.info("Catalog CRC disabled — Unity will skip bundle integrity checks")
 
 
 def po_to_bundle(bundle_path: Path, po_path: Path, lang_code: int,
@@ -177,7 +146,7 @@ def po_to_bundle(bundle_path: Path, po_path: Path, lang_code: int,
     # Update catalog.json so Addressables doesn't reject the modified bundle
     catalog_path = output_path.parent.parent / "catalog.json"
     logger.info("Patching catalog.json CRC…")
-    _patch_catalog_crc(catalog_path, output_path)
+    _patch_catalog_crc(catalog_path)
     logger.info("Done — bundle and catalog.json updated.")
 
 
