@@ -26,9 +26,9 @@ pip install -r requirements.txt
 
 ```bash
 python bundle_to_po.py \
-  --bundle "ZeroParades_Data/StreamingAssets/aa/StandaloneWindows64/g5ibkj7vdwf2g67g_assets_all_df231fe1e06c36a5cb63c87a08cd9257.bundle" \
+  --bundle "../ZeroParades_Data/StreamingAssets/aa/StandaloneWindows64/g5ibkj7vdwf2g67g_assets_all_d56ec3122259028cbe87f4e0d0561ac3.bundle" \
   --lang es_mx \
-  --output my_translation.po
+  --output es_mx_reference.po
 ```
 
 `es_mx` (Mexican Spanish) is the recommended source — the most widely spoken language available after English (which is not directly accessible). Also available: `de`, `ru`, `zh_cn`.
@@ -64,10 +64,13 @@ Open `my_translation.po` in **[Poedit](https://poedit.net/)** (free). `msgid` is
 
 ```bash
 python po_to_bundle.py \
-  --bundle "ZeroParades_Data/StreamingAssets/aa/StandaloneWindows64/g5ibkj7vdwf2g67g_assets_all_df231fe1e06c36a5cb63c87a08cd9257.bundle" \
+  --bundle "../ZeroParades_Data/StreamingAssets/aa/StandaloneWindows64/g5ibkj7vdwf2g67g_assets_all_d56ec3122259028cbe87f4e0d0561ac3.bundle" \
   --po my_translation.po \
   --lang-name fr
 ```
+
+The script also patches `catalog.json` automatically. Unity's Addressables system stores a CRC32 checksum for each bundle in `ZeroParades_Data/StreamingAssets/aa/catalog.json`. After the bundle is modified the checksum no longer matches, and without this patch the game would refuse to load it (`RemoteProviderException: Invalid path`). The patch sets every `m_Crc` value to `0`, which tells Unity to skip integrity verification entirely. A backup of the catalog is saved as `catalog.json.bak` before the first modification.
+
 
 > The language enum integer is looked up automatically from `language_codes.py`. For unconfirmed codes (formula-derived), a warning is printed — see [Language codes](#language-codes) for details.
 
@@ -75,9 +78,14 @@ Untranslated entries fall back to the source language text automatically.
 
 **Activating the translation in-game:** go to *Settings → Language* and select **Deutsch**. The script overwrites the German LocalizationTable asset in-place (it is the template), so your translation replaces German in the language list rather than appearing as a new entry. German is a safe slot to sacrifice — it is one of the four built-in languages but the game was designed primarily in English, so losing German is a reasonable trade-off for gaining your target language.
 
-> **After a game update:** Steam will overwrite the bundle and restore `catalog.json`, undoing the patch. Re-run this step (step 4 only — your `.po` file is untouched) after each update.
+> **After a game update:** Steam will overwrite the bundle and restore `catalog.json`, undoing the patch. 
 
-The script also patches `catalog.json` automatically. Unity's Addressables system stores a CRC32 checksum for each bundle in `ZeroParades_Data/StreamingAssets/aa/catalog.json`. After the bundle is modified the checksum no longer matches, and without this patch the game would refuse to load it (`RemoteProviderException: Invalid path`). The patch sets every `m_Crc` value to `0`, which tells Unity to skip integrity verification entirely. A backup of the catalog is saved as `catalog.json.bak` before the first modification.
+If you also want to refresh .po files with any new translations :
+* rerun `bundle_to_po.py` to extract the updated text to reference file.
+* Then, run `refresh_po.py` to update your existing .po file with any new or changed entries from the reference. This preserves your existing translations and adds placeholders for new text.
+* Rerun `translate_po.py` to translate the new entries.
+* Finally, re-run `po_to_bundle.py` to inject the updated translations back into the game.
+
 
 ---
 
@@ -96,7 +104,7 @@ ZeroParades_Data\StreamingAssets\aa\StandaloneWindows64\
 The single bundle containing all localization data is:
 
 ```
-g5ibkj7vdwf2g67g_assets_all_df231fe1e06c36a5cb63c87a08cd9257.bundle   (~27 MB)
+g5ibkj7vdwf2g67g_assets_all_d56ec3122259028cbe87f4e0d0561ac3.bundle   (~27 MB)
 ```
 
 Inside this bundle, the translation system relies on two asset types:
